@@ -1,0 +1,25 @@
+image: ubuntu
+
+before_script:
+  - apt-get update
+  - apt-get install -y firefox openjdk-8-jdk
+
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    - ./gradlew shebang
+  artifacts:
+    paths:
+      - build/libs/KrswBomb.jar
+
+#NOTE: the account specified below is chosen only for test,
+# i have no hate for it
+test:
+  stage: build
+  script:
+    - ./gradlew shebang
+    - ./build/libs/KrswBomb.jar ainsaitoan 334 --parallel=10
+
