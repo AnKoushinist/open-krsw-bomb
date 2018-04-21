@@ -1,17 +1,16 @@
 package ankoushinist.krswbomb;
 
-import com.google.common.io.ByteStreams;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static ankoushinist.krswbomb.Shared.extractGeckoDriver;
 
 public class Bomb {
     public static final Pattern REGEX_PARALLEL = Pattern.compile("--parallel=([0-9]+)");
@@ -62,7 +61,7 @@ public class Bomb {
             String url = "http://candy.am/pc/blog/top.html#!/" + name;
             FirefoxOptions opts = new FirefoxOptions();
             opts.setHeadless(true);
-            opts.setProxy(socks5(proxy));
+            opts.setProxy(Shared.socks5(proxy));
             for (int i = 0; count == -1 || i < count; i++) {
                 FirefoxDriver browser = new FirefoxDriver(opts);
                 try {
@@ -80,34 +79,6 @@ public class Bomb {
                 }
             }
         }).start();
-    }
-
-    private static org.openqa.selenium.Proxy socks5(String proxy) {
-        org.openqa.selenium.Proxy r = new org.openqa.selenium.Proxy();
-        r.setSocksProxy(proxy);
-        return r;
-    }
-
-    private static String extractGeckoDriver() {
-        String sysProp = System.getProperty("webdriver.gecko.driver");
-        if (sysProp != null) {
-            return sysProp;
-        }
-        try {
-            System.out.println("Extracting geckodriver...");
-            File tmp = File.createTempFile("gecko", "driver");
-            try (InputStream is = Bomb.class.getClassLoader().getResourceAsStream("geckodriver")) {
-                try (OutputStream os = new FileOutputStream(tmp)) {
-                    ByteStreams.copy(is, os);
-                }
-            }
-            tmp.setExecutable(true);
-            String absolute = tmp.getAbsolutePath();
-            System.out.println("Extracted at " + absolute);
-            return absolute;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static class Config {
