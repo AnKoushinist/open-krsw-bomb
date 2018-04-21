@@ -1,11 +1,10 @@
 package ankoushinist.krswbomb;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
+import com.google.common.io.ByteStreams;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 
-
-import java.net.InetSocketAddress;
-import java.net.Proxy;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,9 +14,9 @@ import java.util.regex.Pattern;
 public class Bomb {
     public static final Pattern REGEX_PARALLEL = Pattern.compile("--parallel=([0-9]+)");
     public static final Pattern REGEX_PROXY = Pattern.compile("--proxy=(.+:[0-9]+)");
-    public static final Pattern REGEX_PROXY_EXTRACTION = Pattern.compile("(.+):([0-9]+)");
 
     public static void main(String... args) {
+        System.setProperty("webdriver.gecko.driver", extractGeckoDriver());
         Config cfg = new Config();
         List<String> unconsumed = new ArrayList<>();
         for (String arg : args) {
@@ -59,36 +58,53 @@ public class Bomb {
     private static void launchThread(String name, int count, int id, String proxy) {
         new Thread(() -> {
             String url = "http://candy.am/pc/blog/top.html#!/" + name;
-            OkHttpClient client;
-            if (proxy != null) {
-                client = new OkHttpClient.Builder().proxy(socks5(proxy)).build();
-            } else {
-                client = new OkHttpClient();
-            }
-            Request req = new Request.Builder()
-                    .url(url)
-                    .build();
-            for (int i = 0; i < count; i++) {
+            FirefoxOptions opts = new FirefoxOptions();
+            opts.setHeadless(true);
+            opts.setProxy(socks5(proxy));
+            for (int i = 0; count == -1 || i < count; i++) {
+                FirefoxDriver browser = new FirefoxDriver(opts);
                 try {
-                    client.newCall(req).execute().body().string();
+                    browser.get(url);
                 } catch (Throwable e) {
                     System.err.println("Error from thread " + id + " at " + count);
                     e.printStackTrace();
-                }
-                if (i % 10 == 0) {
-                    System.out.println("Thread #" + id + ": " + i);
+
+                } finally {
+                    browser.close();
+                    if (i % 10 == 0) {
+                        System.out.println("Thread #" + id + ": " + i);
+                    }
                 }
             }
         }).start();
     }
 
-    private static Proxy socks5(String proxy) {
-        Matcher matcher = REGEX_PROXY_EXTRACTION.matcher(proxy);
-        matcher.find();
-        String proxyHost = matcher.group(1);
-        int proxyPort = Integer.parseInt(matcher.group(2));
-        InetSocketAddress proxyAddr = new InetSocketAddress(proxyHost, proxyPort);
-        return new Proxy(Proxy.Type.SOCKS, proxyAddr);
+    private static org.openqa.selenium.Proxy socks5(String proxy) {
+        org.openqa.selenium.Proxy r = new org.openqa.selenium.Proxy();
+        r.setSocksProxy(proxy);
+        return r;
+    }
+
+    private static String extractGeckoDriver() {
+        String sysProp = System.getProperty("webdriver.gecko.driver");
+        if (sysProp != null) {
+            return sysProp;
+        }
+        try {
+            System.out.println("Extracting geckodriver...");
+            File tmp = File.createTempFile("gecko", "driver");
+            try (InputStream is = Bomb.class.getClassLoader().getResourceAsStream("geckodriver")) {
+                try (OutputStream os = new FileOutputStream(tmp)) {
+                    ByteStreams.copy(is, os);
+                }
+            }
+            tmp.setExecutable(true);
+            String absolute = tmp.getAbsolutePath();
+            System.out.println("Extracted at " + absolute);
+            return absolute;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static class Config {

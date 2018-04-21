@@ -11,5 +11,7 @@ repositories {
 
 dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.10.0'
+    compile group: 'org.seleniumhq.selenium', name: 'selenium-firefox-driver', version: '3.11.0'
+    compile 'com.google.guava:guava:23.6-jre'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
