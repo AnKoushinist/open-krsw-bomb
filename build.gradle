@@ -15,3 +15,26 @@ dependencies {
     compile 'com.google.guava:guava:23.6-jre'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
+
+task fatJar(type: Jar) {
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+    manifest {
+        attributes 'Main-Class': 'ankoushinist.krswbomb.Bomb'
+    }
+}
+
+task("shebang") {
+    def output = new File(buildDir, "libs/KrswBomb.jar")
+    dependsOn fatJar
+    inputs.files fatJar
+    outputs.files output
+    doLast {
+        def shebang = "#!/usr/bin/java -jar\n".bytes
+        def fileData = fatJar.archivePath.bytes
+        output.bytes = shebang
+        output.append fileData
+        output.executable = true
+    }
+}
