@@ -67,7 +67,7 @@ public class Bomb {
                 FirefoxDriver browser = new FirefoxDriver(opts);
                 try {
                     browser.get(url);
-                    WebDriverWait wait = new WebDriverWait(browser, 10);
+                    WebDriverWait wait = new WebDriverWait(browser, 20);
                     wait.until(drv -> browser.executeScript("return document.readyState").equals("complete"));
                 } catch (Throwable e) {
                     System.err.println("Error from thread " + id + " at " + count);
