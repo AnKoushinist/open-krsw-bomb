@@ -3,11 +3,13 @@ package ankoushinist.krswbomb;
 import com.google.common.io.ByteStreams;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,10 +67,11 @@ public class Bomb {
                 FirefoxDriver browser = new FirefoxDriver(opts);
                 try {
                     browser.get(url);
+                    WebDriverWait wait = new WebDriverWait(browser, 10);
+                    wait.until(drv -> browser.executeScript("return document.readyState").equals("complete"));
                 } catch (Throwable e) {
                     System.err.println("Error from thread " + id + " at " + count);
                     e.printStackTrace();
-
                 } finally {
                     browser.close();
                     if (i % 10 == 0) {
